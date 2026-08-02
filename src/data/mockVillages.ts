@@ -1,0 +1,68 @@
+import { Village } from '../types';
+
+export const MOCK_VILLAGES: Village[] = [
+  {
+    id: 'v1',
+    name: 'Penumaka',
+    district: 'Guntur (Andhra Pradesh)',
+    activeComplaints: 8,
+    lat: 16.5020,
+    lng: 80.5750,
+  },
+  {
+    id: 'v2',
+    name: 'Undavalli',
+    district: 'Guntur (Andhra Pradesh)',
+    activeComplaints: 6,
+    lat: 16.4958,
+    lng: 80.5847,
+  },
+  {
+    id: 'v3',
+    name: 'Kankipadu',
+    district: 'NTR District (Andhra Pradesh)',
+    activeComplaints: 5,
+    lat: 16.4273,
+    lng: 80.7788,
+  },
+  {
+    id: 'v4',
+    name: 'Gollapudi',
+    district: 'NTR District (Andhra Pradesh)',
+    activeComplaints: 4,
+    lat: 16.5412,
+    lng: 80.5891,
+  },
+  {
+    id: 'v5',
+    name: 'Tullur',
+    district: 'Guntur / Amaravati (Andhra Pradesh)',
+    activeComplaints: 5,
+    lat: 16.5365,
+    lng: 80.4682,
+  },
+  {
+    id: 'v6',
+    name: 'Bhimavaram Rural',
+    district: 'West Godavari (Andhra Pradesh)',
+    activeComplaints: 3,
+    lat: 16.5449,
+    lng: 81.5212,
+  },
+  {
+    id: 'v7',
+    name: 'Anakapalle',
+    district: 'Visakhapatnam (Andhra Pradesh)',
+    activeComplaints: 4,
+    lat: 17.6868,
+    lng: 83.0042,
+  },
+  {
+    id: 'v8',
+    name: 'Tirupati Rural',
+    district: 'Tirupati (Andhra Pradesh)',
+    activeComplaints: 2,
+    lat: 13.6288,
+    lng: 79.4192,
+  },
+];
