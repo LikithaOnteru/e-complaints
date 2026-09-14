@@ -7,6 +7,7 @@ const STORAGE_KEYS = {
   THEME: 'erural_theme_v1',
   NOTIFICATIONS: 'erural_notifications_v2_ap',
   DRAFT: 'erural_draft_v1',
+  REGISTERED_USERS: 'erural_registered_users_v2_ap',
 };
 
 export function getStoredComplaints(): Complaint[] {
@@ -44,7 +45,11 @@ export function getStoredUser(): User | null {
   try {
     const data = localStorage.getItem(STORAGE_KEYS.USER);
     if (data) {
-      return JSON.parse(data);
+      const parsed = JSON.parse(data);
+      if (parsed && parsed.id !== 'usr_krishna_rao') {
+        return parsed;
+      }
+      localStorage.removeItem(STORAGE_KEYS.USER);
     }
   } catch (e) {
     console.error('Failed to parse user', e);
@@ -76,4 +81,38 @@ export function saveStoredDraft(draft: any): void {
   } else {
     localStorage.removeItem(STORAGE_KEYS.DRAFT);
   }
+}
+
+export function getStoredRegisteredUsers(): User[] {
+  try {
+    const data = localStorage.getItem(STORAGE_KEYS.REGISTERED_USERS);
+    if (data) {
+      return JSON.parse(data);
+    }
+  } catch (e) {
+    console.error('Failed to parse registered users', e);
+  }
+  return [];
+}
+
+export function saveStoredRegisteredUsers(users: User[]): void {
+  try {
+    localStorage.setItem(STORAGE_KEYS.REGISTERED_USERS, JSON.stringify(users));
+  } catch (e) {
+    console.error('Failed to save registered users', e);
+  }
+}
+
+export function addStoredUser(user: User): User[] {
+  const users = getStoredRegisteredUsers();
+  const existingIdx = users.findIndex(u => u.email.toLowerCase() === user.email.toLowerCase());
+  let updated: User[];
+  if (existingIdx >= 0) {
+    users[existingIdx] = { ...users[existingIdx], ...user };
+    updated = [...users];
+  } else {
+    updated = [user, ...users];
+  }
+  saveStoredRegisteredUsers(updated);
+  return updated;
 }

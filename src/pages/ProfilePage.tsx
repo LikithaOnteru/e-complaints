@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { MOCK_BADGES } from '../data/mockBadges';
-import { User, Phone, MapPin, Mail, Award, Edit3, ShieldCheck, Star, Users, Leaf, Crown } from 'lucide-react';
+import { User, Phone, MapPin, Mail, Award, Edit3, ShieldCheck, Star, Users, Leaf, Crown, LogOut } from 'lucide-react';
 import { Modal } from '../components/ui/Modal';
 import { motion } from 'framer-motion';
 
 export const ProfilePage: React.FC = () => {
-  const { currentUser, complaints, showToast } = useApp();
+  const { currentUser, complaints, showToast, logout } = useApp();
 
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [name, setName] = useState(currentUser?.name || 'Krishna Rao');
@@ -56,13 +56,23 @@ export const ProfilePage: React.FC = () => {
                 </p>
               </div>
 
-              <button
-                onClick={() => setEditModalOpen(true)}
-                className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-200 text-xs font-bold flex items-center justify-center gap-2 transition-colors self-center sm:self-auto"
-              >
-                <Edit3 className="w-4 h-4 text-blue-600" />
-                Edit Profile
-              </button>
+              <div className="flex items-center gap-2 self-center sm:self-auto">
+                <button
+                  onClick={() => setEditModalOpen(true)}
+                  className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-200 text-xs font-bold flex items-center justify-center gap-2 transition-colors"
+                >
+                  <Edit3 className="w-4 h-4 text-blue-600" />
+                  Edit Profile
+                </button>
+
+                <button
+                  onClick={logout}
+                  className="px-4 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/50 dark:hover:bg-rose-900/60 text-rose-600 dark:text-rose-400 text-xs font-extrabold flex items-center justify-center gap-2 transition-colors border border-rose-200 dark:border-rose-900/60 shadow-xs"
+                >
+                  <LogOut className="w-4 h-4" />
+                  Logout Account
+                </button>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 text-xs font-semibold text-slate-600 dark:text-slate-300">

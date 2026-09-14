@@ -8,7 +8,7 @@ export const Footer: React.FC = () => {
   return (
     <footer className="bg-slate-900 text-slate-300 border-t border-slate-800 pt-12 pb-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
           {/* Brand Info */}
           <div className="space-y-4 md:col-span-1">
             <div className="flex items-center gap-3">
@@ -58,21 +58,6 @@ export const Footer: React.FC = () => {
             </ul>
           </div>
 
-          {/* Project Details */}
-          <div>
-            <h4 className="text-sm font-bold text-white uppercase tracking-wider mb-4">Demo Credentials</h4>
-            <div className="space-y-2 text-sm text-slate-400">
-              <div className="p-2.5 rounded-lg bg-slate-800/80 border border-slate-700">
-                <p className="font-semibold text-slate-200 text-xs">Citizen Login</p>
-                <p className="text-xs text-blue-400">citizen@test.com / 123456</p>
-              </div>
-              <div className="p-2.5 rounded-lg bg-slate-800/80 border border-slate-700">
-                <p className="font-semibold text-slate-200 text-xs">Admin Login</p>
-                <p className="text-xs text-emerald-400">admin@test.com / 123456</p>
-              </div>
-            </div>
-          </div>
-
           {/* Contact & Support */}
           <div>
             <h4 className="text-sm font-bold text-white uppercase tracking-wider mb-4">Contact & Support</h4>
@@ -84,15 +69,6 @@ export const Footer: React.FC = () => {
               <li className="flex items-center gap-2.5">
                 <Mail className="w-4 h-4 text-blue-400 shrink-0" />
                 <span>support@eruralcomplaints.gov.in</span>
-              </li>
-              <li className="pt-2">
-                <button
-                  onClick={resetDemoData}
-                  className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 transition-colors"
-                >
-                  <RotateCcw className="w-3.5 h-3.5 text-amber-400" />
-                  Reset 30 Demo Complaints
-                </button>
               </li>
             </ul>
           </div>

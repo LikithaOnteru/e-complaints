@@ -108,8 +108,8 @@ export const RegisterComplaintPage: React.FC = () => {
       landmark,
       priority,
       imageUrl,
-      citizenName: currentUser?.name || 'Ramesh Singh',
-      citizenEmail: currentUser?.email || 'citizen@test.com',
+      citizenName: currentUser?.name || 'Anonymous Citizen',
+      citizenEmail: currentUser?.email || 'guest@ap.gov.in',
       coordinates: {
         lat: 25.3180 + (Math.random() - 0.5) * 0.02,
         lng: 82.9739 + (Math.random() - 0.5) * 0.02,

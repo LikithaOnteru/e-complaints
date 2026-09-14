@@ -52,18 +52,18 @@ export const Navbar: React.FC = () => {
           {/* Logo & Brand */}
           <div 
             onClick={() => handleNav(currentUser?.role === 'admin' ? 'admin_dashboard' : currentUser?.role === 'citizen' || currentUser?.role === 'volunteer' ? 'citizen_dashboard' : 'landing')} 
-            className="flex items-center gap-3 cursor-pointer group"
+            className="flex items-center gap-3 cursor-pointer group min-w-0 shrink-0"
           >
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 via-blue-700 to-green-500 p-0.5 shadow-md group-hover:scale-105 transition-transform">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 via-blue-700 to-green-500 p-0.5 shadow-md group-hover:scale-105 transition-transform shrink-0">
               <div className="w-full h-full bg-white dark:bg-slate-900 rounded-[10px] flex items-center justify-center">
                 <Building2 className="w-5 h-5 text-blue-600 dark:text-blue-400" />
               </div>
             </div>
-            <div>
-              <h1 className="text-xl font-black bg-gradient-to-r from-blue-600 via-blue-700 to-green-600 bg-clip-text text-transparent tracking-tight">
+            <div className="min-w-0">
+              <h1 className="text-lg sm:text-xl font-black bg-gradient-to-r from-blue-600 via-blue-700 to-green-600 bg-clip-text text-transparent tracking-tight truncate">
                 {t.portalTitle}
               </h1>
-              <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 -mt-1 tracking-wider uppercase">
+              <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 -mt-1 tracking-wider uppercase truncate">
                 {t.portalSubtitle}
               </p>
             </div>
@@ -95,6 +95,9 @@ export const Navbar: React.FC = () => {
             {(!currentUser || currentUser.role === 'guest') && (
               <>
                 <NavButton active={activeView === 'landing'} onClick={() => handleNav('landing')} icon={LayoutDashboard} label={t.home} />
+                <NavButton active={activeView === 'register_complaint'} onClick={() => handleNav('register_complaint')} icon={FilePlus} label={t.registerComplaint} highlight />
+                <NavButton active={activeView === 'my_complaints'} onClick={() => handleNav('my_complaints')} icon={FileText} label="Grievances" />
+                <NavButton active={activeView === 'track_complaint'} onClick={() => handleNav('track_complaint')} icon={Search} label={t.trackComplaint} />
                 <NavButton active={activeView === 'village_map'} onClick={() => handleNav('village_map')} icon={MapPin} label={t.villageMap} />
                 <NavButton active={activeView === 'emergency_contacts'} onClick={() => handleNav('emergency_contacts')} icon={PhoneCall} label={t.emergency} />
               </>
@@ -116,15 +119,6 @@ export const Navbar: React.FC = () => {
                 <option value="hi" className="dark:bg-slate-900">हिंदी</option>
               </select>
             </div>
-
-            {/* Reset Demo Data Button */}
-            <button
-              onClick={resetDemoData}
-              title="Reset AP Demo Data"
-              className="p-2 rounded-xl text-slate-500 hover:text-blue-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-            >
-              <RotateCcw className="w-4 h-4" />
-            </button>
 
             {/* Dark Mode Toggle */}
             <button
@@ -164,18 +158,19 @@ export const Navbar: React.FC = () => {
                   <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-600 to-emerald-600 text-white flex items-center justify-center font-black text-xs shadow-xs">
                     {currentUser.name.charAt(0)}
                   </div>
-                  <div className="hidden lg:block">
-                    <p className="text-xs font-bold text-slate-800 dark:text-white leading-tight">{currentUser.name}</p>
-                    <p className="text-[10px] font-medium text-blue-600 dark:text-blue-400 capitalize">{currentUser.role}</p>
+                  <div className="hidden lg:block max-w-[140px]">
+                    <p className="text-xs font-bold text-slate-800 dark:text-white leading-tight truncate">{currentUser.name}</p>
+                    <p className="text-[10px] font-medium text-blue-600 dark:text-blue-400 capitalize truncate">{currentUser.role}</p>
                   </div>
                 </button>
 
                 <button
                   onClick={logout}
-                  title="Logout"
-                  className="p-2 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
+                  title="Logout of Account"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 dark:bg-rose-950/50 dark:hover:bg-rose-900/60 dark:text-rose-400 text-xs font-extrabold transition-all border border-rose-200 dark:border-rose-900/60 shadow-xs"
                 >
-                  <LogOut className="w-5 h-5" />
+                  <LogOut className="w-4 h-4" />
+                  <span>Logout</span>
                 </button>
               </div>
             ) : (

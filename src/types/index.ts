@@ -20,6 +20,9 @@ export interface TimelineEvent {
   timestamp: string;
   description: string;
   updatedBy: string;
+  updatedByRole?: Role;
+  proofUrl?: string;
+  progressPercent?: number;
 }
 
 export interface Remark {
@@ -65,11 +68,13 @@ export interface User {
   name: string;
   email: string;
   role: Role;
+  password?: string;
   phone?: string;
   village?: string;
   ward?: string;
   badges?: string[];
   totalComplaintsSubmitted?: number;
+  createdAt?: string;
 }
 
 export interface NotificationItem {

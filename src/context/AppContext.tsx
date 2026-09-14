@@ -1,6 +1,15 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Complaint, User, NotificationItem, Role, StatusType } from '../types';
-import { getStoredComplaints, saveStoredComplaints, resetStoredComplaints, getStoredUser, saveStoredUser } from '../utils/storage';
+import { Complaint, User, NotificationItem, Role, StatusType, TimelineEvent } from '../types';
+import { 
+  getStoredComplaints, 
+  saveStoredComplaints, 
+  resetStoredComplaints, 
+  getStoredUser, 
+  saveStoredUser,
+  getStoredRegisteredUsers,
+  addStoredUser
+} from '../utils/storage';
+import { api } from '../utils/api';
 import { Language, TRANSLATIONS, TranslationStrings } from '../data/translations';
 
 export type ActiveView = 
@@ -44,12 +53,14 @@ interface AppContextType {
   showToast: (message: string, type?: 'success' | 'info' | 'warning' | 'error') => void;
   
   // Auth
-  login: (email: string, role: Role) => boolean;
+  login: (email: string, role: Role, password?: string) => Promise<boolean>;
+  registerUser: (userData: { name: string; email: string; role: Role; password?: string; phone?: string; village?: string; ward?: string }) => Promise<boolean>;
   logout: () => void;
   
   // Complaints CRUD
   addComplaint: (newComplaintData: Omit<Complaint, 'id' | 'createdAt' | 'updatedAt' | 'timeline' | 'remarks' | 'status'>) => string;
   updateComplaintStatus: (id: string, newStatus: StatusType, remarkText?: string) => void;
+  addProgressUpdate: (id: string, update: { stage: string; description: string; status?: StatusType; proofUrl?: string; progressPercent?: number }) => void;
   assignOfficer: (id: string, officer: { name: string; department: string; contact?: string }) => void;
   addRemark: (id: string, text: string) => void;
   addRating: (id: string, rating: number, feedback?: string) => void;
@@ -122,11 +133,22 @@ export const DEFAULT_ADMIN_USER: User = {
   village: 'Guntur & NTR District HQ, AP',
 };
 
+function parseLocationHash(): { view: ActiveView; complaintId: string | null } {
+  const hash = window.location.hash.replace(/^#\/?/, '');
+  if (!hash) return { view: 'landing', complaintId: null };
+  const [viewPart, queryPart] = hash.split('?');
+  const view = (viewPart as ActiveView) || 'landing';
+  const params = new URLSearchParams(queryPart || '');
+  const complaintId = params.get('id');
+  return { view, complaintId };
+}
+
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const initialLoc = parseLocationHash();
   const [complaints, setComplaints] = useState<Complaint[]>(getStoredComplaints);
   const [currentUser, setCurrentUser] = useState<User | null>(getStoredUser);
-  const [activeView, setActiveView] = useState<ActiveView>('landing');
-  const [selectedComplaintId, setSelectedComplaintId] = useState<string | null>(null);
+  const [activeView, setActiveView] = useState<ActiveView>(initialLoc.view);
+  const [selectedComplaintId, setSelectedComplaintId] = useState<string | null>(initialLoc.complaintId);
   const [language, setLanguageState] = useState<Language>(() => {
     return (localStorage.getItem('erural_lang') as Language) || 'en';
   });
@@ -137,6 +159,42 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [toast, setToast] = useState<ToastState | null>(null);
 
   const t = TRANSLATIONS[language] || TRANSLATIONS.en;
+
+  // Sync with Express Backend API on Mount
+  useEffect(() => {
+    async function loadBackendData() {
+      const remoteComplaints = await api.getComplaints();
+      if (remoteComplaints && remoteComplaints.length > 0) {
+        setComplaints(remoteComplaints);
+      }
+      const remoteNotifications = await api.getNotifications();
+      if (remoteNotifications && remoteNotifications.length > 0) {
+        setNotifications(remoteNotifications);
+      }
+      const remoteUsers = await api.getUsers();
+      if (remoteUsers && remoteUsers.length > 0) {
+        remoteUsers.forEach(u => addStoredUser(u));
+      }
+    }
+    loadBackendData();
+  }, []);
+
+  // Listen to Browser Back and Forward Button Events (Chrome history navigation)
+  useEffect(() => {
+    const handlePopState = (event: PopStateEvent) => {
+      if (event.state && event.state.view) {
+        setActiveView(event.state.view);
+        setSelectedComplaintId(event.state.complaintId || null);
+      } else {
+        const { view, complaintId } = parseLocationHash();
+        setActiveView(view);
+        setSelectedComplaintId(complaintId);
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
 
   const setLanguage = (lang: Language) => {
     setLanguageState(lang);
@@ -177,36 +235,91 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }, 4000);
   };
 
-  const navigateTo = (view: ActiveView, complaintId: string | null = null) => {
+  const navigateTo = (view: ActiveView, complaintId: string | null = null, replace = false) => {
     setActiveView(view);
     if (complaintId !== undefined) {
       setSelectedComplaintId(complaintId);
     }
+
+    const hash = complaintId ? `#/${view}?id=${complaintId}` : `#/${view}`;
+    const stateObj = { view, complaintId };
+
+    if (replace) {
+      window.history.replaceState(stateObj, '', hash);
+    } else {
+      window.history.pushState(stateObj, '', hash);
+    }
+
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const login = (email: string, role: Role): boolean => {
-    let userObj: User;
-    if (role === 'admin') {
-      userObj = DEFAULT_ADMIN_USER;
-      setCurrentUser(userObj);
-      showToast('Logged in successfully as District Admin Officer (AP)', 'success');
-      navigateTo('admin_dashboard');
+  const login = async (email: string, role: Role, password?: string): Promise<boolean> => {
+    const cleanEmail = email.trim().toLowerCase();
+
+    // 1. Try Backend Auth API
+    const apiRes = await api.login(email, role, password);
+    if (apiRes && apiRes.success && apiRes.user) {
+      setCurrentUser(apiRes.user);
+      addStoredUser(apiRes.user);
+      showToast(`Welcome back, ${apiRes.user.name}! Logged in successfully.`, 'success');
+      navigateTo(apiRes.user.role === 'admin' ? 'admin_dashboard' : 'citizen_dashboard');
       return true;
-    } else if (role === 'volunteer') {
-      userObj = DEFAULT_VOLUNTEER_USER;
-      setCurrentUser(userObj);
-      showToast('Logged in successfully as Gram Volunteer (AP)', 'success');
-      navigateTo('citizen_dashboard');
-      return true;
-    } else if (role === 'citizen') {
-      userObj = DEFAULT_CITIZEN_USER;
-      setCurrentUser(userObj);
-      showToast('Logged in successfully as Krishna Rao (Citizen, AP)', 'success');
-      navigateTo('citizen_dashboard');
+    } else if (apiRes && apiRes.error) {
+      showToast(apiRes.error, 'error');
+      return false;
+    }
+
+    // 2. Fallback to registered accounts in localStorage if API offline
+    const registered = getStoredRegisteredUsers();
+    const foundUser = registered.find(
+      u => u.email.toLowerCase() === cleanEmail || (u.phone && u.phone.includes(cleanEmail))
+    );
+
+    if (foundUser) {
+      if (foundUser.password && password && foundUser.password !== password) {
+        showToast('Incorrect password. Please check your credentials.', 'error');
+        return false;
+      }
+      setCurrentUser(foundUser);
+      showToast(`Welcome back, ${foundUser.name}! Logged in successfully.`, 'success');
+      navigateTo(foundUser.role === 'admin' ? 'admin_dashboard' : 'citizen_dashboard');
       return true;
     }
+
+    showToast('Account not found. Please create an account first.', 'error');
     return false;
+  };
+
+  const registerUser = async (userData: {
+    name: string;
+    email: string;
+    role: Role;
+    password?: string;
+    phone?: string;
+    village?: string;
+    ward?: string;
+  }): Promise<boolean> => {
+    // 1. Send registration to Express Backend
+    const apiRes = await api.register(userData);
+    
+    const newUser: User = apiRes?.user || {
+      id: `usr_${Date.now()}`,
+      name: userData.name,
+      email: userData.email,
+      role: userData.role,
+      password: userData.password,
+      phone: userData.phone || '',
+      village: userData.village || 'Penumaka',
+      ward: userData.ward || 'Ward 1',
+      totalComplaintsSubmitted: 0,
+      createdAt: new Date().toLocaleDateString(),
+    };
+
+    addStoredUser(newUser);
+    setCurrentUser(newUser);
+    showToast(`Account created successfully for ${newUser.name}!`, 'success');
+    navigateTo(newUser.role === 'admin' ? 'admin_dashboard' : 'citizen_dashboard');
+    return true;
   };
 
   const logout = () => {
@@ -240,6 +353,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
 
     setComplaints(prev => [newComplaint, ...prev]);
+    api.createComplaint(data);
 
     const newNotif: NotificationItem = {
       id: `n_${Date.now()}`,
@@ -292,6 +406,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       })
     );
 
+    api.updateStatus(id, newStatus, remarkText, currentUser?.name, currentUser?.role);
+
     setNotifications(prev => [
       {
         id: `n_${Date.now()}`,
@@ -306,6 +422,72 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     ]);
 
     showToast(`Complaint ${id} status updated to ${newStatus}`, 'success');
+  };
+
+  const addProgressUpdate = (
+    id: string,
+    update: { stage: string; description: string; status?: StatusType; proofUrl?: string; progressPercent?: number }
+  ) => {
+    const now = new Date().toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
+
+    setComplaints(prev =>
+      prev.map(c => {
+        if (c.id === id) {
+          const nextStatus = update.status || c.status;
+          const newTimelineItem: TimelineEvent = {
+            id: `t_${Date.now()}`,
+            stage: update.stage,
+            timestamp: now,
+            description: update.description,
+            updatedBy: currentUser?.name || 'Gram Volunteer',
+            updatedByRole: currentUser?.role || 'volunteer',
+            proofUrl: update.proofUrl,
+            progressPercent: update.progressPercent,
+          };
+
+          const newRemarks = [...c.remarks];
+          if (update.description) {
+            newRemarks.push({
+              id: `r_${Date.now()}`,
+              author: currentUser?.name || 'Gram Volunteer',
+              role: currentUser?.role || 'volunteer',
+              text: `[${update.stage}] ${update.description}${update.proofUrl ? ' (Proof photo attached)' : ''}`,
+              timestamp: now,
+            });
+          }
+
+          return {
+            ...c,
+            status: nextStatus,
+            updatedAt: now,
+            timeline: [...c.timeline, newTimelineItem],
+            remarks: newRemarks,
+          };
+        }
+        return c;
+      })
+    );
+
+    api.postProgressUpdate(id, {
+      ...update,
+      updatedBy: currentUser?.name || 'Gram Volunteer',
+      updatedByRole: currentUser?.role || 'volunteer',
+    });
+
+    setNotifications(prev => [
+      {
+        id: `n_${Date.now()}`,
+        title: `Progress Update on ${id}`,
+        message: `${update.stage}: ${update.description}`,
+        timestamp: now,
+        read: false,
+        type: update.status === 'Resolved' ? 'resolved' : 'status_change',
+        complaintId: id,
+      },
+      ...prev,
+    ]);
+
+    showToast(`Progress update & proof photo posted for ${id}!`, 'success');
   };
 
   const assignOfficer = (id: string, officer: { name: string; department: string; contact?: string }) => {
@@ -333,6 +515,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         return c;
       })
     );
+
+    api.assignOfficer(id, officer, currentUser?.name || 'Admin');
 
     setNotifications(prev => [
       {
@@ -421,9 +605,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setLanguage,
         showToast,
         login,
+        registerUser,
         logout,
         addComplaint,
         updateComplaintStatus,
+        addProgressUpdate,
         assignOfficer,
         addRemark,
         addRating,

@@ -4,6 +4,7 @@ import { Complaint, StatusType, PriorityType } from '../types';
 import { StatusBadge } from '../components/ui/StatusBadge';
 import { PriorityBadge } from '../components/ui/PriorityBadge';
 import { Modal } from '../components/ui/Modal';
+import { ProgressUpdateModal } from '../components/ui/ProgressUpdateModal';
 import { 
   FileText, 
   Search, 
@@ -14,7 +15,8 @@ import {
   Eye, 
   ExternalLink,
   ShieldCheck,
-  Edit3
+  Edit3,
+  Camera
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -31,6 +33,7 @@ export const AdminComplaintsPage: React.FC = () => {
   const [selectedComplaint, setSelectedComplaint] = useState<Complaint | null>(null);
   const [statusModalOpen, setStatusModalOpen] = useState<boolean>(false);
   const [assignModalOpen, setAssignModalOpen] = useState<boolean>(false);
+  const [progressModalOpen, setProgressModalOpen] = useState<boolean>(false);
 
   // Status Modal form states
   const [newStatus, setNewStatus] = useState<StatusType>('In Progress');
@@ -66,6 +69,11 @@ export const AdminComplaintsPage: React.FC = () => {
     setDepartment(c.assignedOfficer?.department || 'Public Works Dept (PWD)');
     setContact(c.assignedOfficer?.contact || '+91 94150 88210');
     setAssignModalOpen(true);
+  };
+
+  const openProgressModal = (c: Complaint) => {
+    setSelectedComplaint(c);
+    setProgressModalOpen(true);
   };
 
   const handleStatusSubmit = (e: React.FormEvent) => {
@@ -223,9 +231,17 @@ export const AdminComplaintsPage: React.FC = () => {
                       </button>
 
                       <button
+                        onClick={() => openProgressModal(c)}
+                        title="Post Volunteer/Field Progress & Proof Photo"
+                        className="p-1.5 rounded-lg text-slate-500 hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-950/40 transition-colors"
+                      >
+                        <Camera className="w-4 h-4" />
+                      </button>
+
+                      <button
                         onClick={() => openAssignModal(c)}
                         title="Assign Departmental Officer"
-                        className="p-1.5 rounded-lg text-slate-500 hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-950/40 transition-colors"
+                        className="p-1.5 rounded-lg text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 transition-colors"
                       >
                         <UserCheck className="w-4 h-4" />
                       </button>
@@ -355,6 +371,15 @@ export const AdminComplaintsPage: React.FC = () => {
             </div>
           </form>
         </Modal>
+      )}
+
+      {/* Progress Update Modal */}
+      {selectedComplaint && progressModalOpen && (
+        <ProgressUpdateModal
+          isOpen={progressModalOpen}
+          onClose={() => setProgressModalOpen(false)}
+          complaint={selectedComplaint}
+        />
       )}
     </div>
   );

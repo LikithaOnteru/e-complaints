@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { StatCard } from '../components/ui/StatCard';
 import { StatusBadge } from '../components/ui/StatusBadge';
 import { PriorityBadge } from '../components/ui/PriorityBadge';
-import { CategoryType } from '../types';
+import { ProgressUpdateModal } from '../components/ui/ProgressUpdateModal';
+import { CategoryType, Complaint } from '../types';
 import { 
   FileText, 
   Clock, 
@@ -24,22 +25,34 @@ import {
   ShieldCheck,
   Award,
   ChevronRight,
-  ExternalLink
+  ExternalLink,
+  Users,
+  Camera,
+  PlusCircle,
+  CheckSquare
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export const CitizenDashboard: React.FC = () => {
   const { currentUser, complaints, navigateTo } = useApp();
+  const [selectedComplaintForProgress, setSelectedComplaintForProgress] = useState<Complaint | null>(null);
 
-  // Filter complaints submitted by or relevant to current citizen
-  const citizenComplaints = complaints.filter(
-    c => c.citizenEmail === currentUser?.email || c.citizenName === currentUser?.name
-  );
+  const isVolunteer = currentUser?.role === 'volunteer';
 
-  const total = citizenComplaints.length;
-  const pending = citizenComplaints.filter(c => c.status === 'Pending').length;
-  const inProgress = citizenComplaints.filter(c => c.status === 'In Progress').length;
-  const resolved = citizenComplaints.filter(c => c.status === 'Resolved').length;
+  // Filter complaints
+  // For citizens: complaints submitted by them
+  // For volunteers: complaints in their village or assigned to them, or all demo complaints
+  const userComplaints = complaints.filter(c => {
+    if (isVolunteer) {
+      return true; // Volunteers can monitor all grievances in their village / ward
+    }
+    return c.citizenEmail === currentUser?.email || c.citizenName === currentUser?.name;
+  });
+
+  const total = userComplaints.length;
+  const pending = userComplaints.filter(c => c.status === 'Pending').length;
+  const inProgress = userComplaints.filter(c => c.status === 'In Progress').length;
+  const resolved = userComplaints.filter(c => c.status === 'Resolved').length;
 
   const categories: { title: CategoryType; icon: React.ComponentType<{ className?: string }>; color: string }[] = [
     { title: 'Road Damage', icon: Route, color: 'bg-blue-500 text-white' },
@@ -55,16 +68,24 @@ export const CitizenDashboard: React.FC = () => {
   return (
     <div className="space-y-8 pb-12">
       {/* Welcome Banner */}
-      <div className="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 text-white rounded-3xl p-6 sm:p-8 shadow-xl relative overflow-hidden">
+      <div className={`rounded-3xl p-6 sm:p-8 shadow-xl relative overflow-hidden text-white ${
+        isVolunteer 
+          ? 'bg-gradient-to-r from-purple-700 via-indigo-700 to-blue-700' 
+          : 'bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700'
+      }`}>
         <div className="relative z-10 space-y-2 max-w-2xl">
-          <span className="px-3 py-1 rounded-full bg-white/20 text-white text-xs font-bold uppercase tracking-wider backdrop-blur-xs">
-            Citizen Dashboard
+          <span className="px-3 py-1 rounded-full bg-white/20 text-white text-xs font-bold uppercase tracking-wider backdrop-blur-xs flex items-center gap-1.5 w-max">
+            {isVolunteer ? <Users className="w-3.5 h-3.5" /> : null}
+            {isVolunteer ? 'Grama Sachivalayam Volunteer Work Hub' : 'Citizen Dashboard'}
           </span>
           <h2 className="text-3xl sm:text-4xl font-black tracking-tight">
-            Namaste, {currentUser?.name || 'Villager'}! 👋
+            Namaste, {currentUser?.name || 'User'}! 👋
           </h2>
           <p className="text-blue-100 text-sm leading-relaxed">
-            Welcome to your digital grievance management portal for <strong>{currentUser?.village || 'Rampur'}</strong> ({currentUser?.ward || 'Ward 3'}). You can file new complaints, check live progress, and access village helpline numbers.
+            {isVolunteer
+              ? `You are logged in as Grama Sachivalayam Volunteer for ${currentUser?.village || 'Undavalli Village'}. Monitor field grievances, post progress status updates, and attach proof photos.`
+              : `Welcome to your digital grievance management portal for ${currentUser?.village || 'Penumaka Village'} (${currentUser?.ward || 'Ward 4'}). You can file new complaints, check live progress, and access village helpline numbers.`
+            }
           </p>
         </div>
 
@@ -75,35 +96,88 @@ export const CitizenDashboard: React.FC = () => {
       {/* Statistics Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         <StatCard
-          title="Total Complaints"
+          title={isVolunteer ? "Village Grievances" : "Total Complaints"}
           value={total}
           icon={FileText}
           color="blue"
-          subtitle="Grievances submitted"
+          subtitle="Grievances registered"
           onClick={() => navigateTo('my_complaints')}
         />
         <StatCard
-          title="Pending"
+          title="Pending Action"
           value={pending}
           icon={Clock}
           color="amber"
-          subtitle="Awaiting officer review"
+          subtitle="Awaiting inspection"
         />
         <StatCard
-          title="In Progress"
+          title="Work In Progress"
           value={inProgress}
           icon={Loader2}
           color="purple"
-          subtitle="Field team on ground"
+          subtitle="Field work underway"
         />
         <StatCard
-          title="Resolved"
+          title="Resolved & Verified"
           value={resolved}
           icon={CheckCircle2}
           color="emerald"
-          subtitle="Issues fixed & verified"
+          subtitle="Fixed with proof"
         />
       </div>
+
+      {/* VOLUNTEER SPECIFIC HUB: Post Progress & Attach Proof */}
+      {isVolunteer && (
+        <div className="bg-white dark:bg-slate-800 rounded-3xl p-6 border-2 border-purple-200 dark:border-purple-800/80 shadow-xl space-y-4">
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <div>
+              <div className="flex items-center gap-2">
+                <Camera className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                <h3 className="text-lg font-black text-slate-900 dark:text-white">Volunteer Field Action Hub</h3>
+              </div>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Inspect open grievances, post work progress updates, and upload visual proof photos.
+              </p>
+            </div>
+
+            <span className="px-3 py-1 rounded-full bg-purple-50 dark:bg-purple-950 text-purple-700 dark:text-purple-300 font-extrabold text-xs">
+              {userComplaints.filter(c => c.status !== 'Resolved').length} Open Tasks
+            </span>
+          </div>
+
+          <div className="divide-y divide-slate-100 dark:divide-slate-700/60">
+            {userComplaints.slice(0, 5).map(c => (
+              <div key={c.id} className="py-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div className="space-y-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-purple-600 dark:text-purple-400">{c.id}</span>
+                    <StatusBadge status={c.status} size="sm" />
+                    <PriorityBadge priority={c.priority} size="sm" />
+                  </div>
+                  <h4 className="text-sm font-bold text-slate-900 dark:text-white">{c.title}</h4>
+                  <p className="text-xs text-slate-500">📍 {c.village} ({c.wardNumber}) • Citizen: {c.citizenName}</p>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
+                  <button
+                    onClick={() => navigateTo('complaint_details', c.id)}
+                    className="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
+                  >
+                    View Details
+                  </button>
+                  <button
+                    onClick={() => setSelectedComplaintForProgress(c)}
+                    className="px-3.5 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs shadow-md flex items-center gap-1.5"
+                  >
+                    <Camera className="w-3.5 h-3.5" />
+                    Update Progress & Proof
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Quick Action Buttons */}
       <div className="space-y-3">
@@ -150,7 +224,7 @@ export const CitizenDashboard: React.FC = () => {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {categories.map(cat => {
             const Icon = cat.icon;
-            const catCount = citizenComplaints.filter(c => c.category === cat.title).length;
+            const catCount = userComplaints.filter(c => c.category === cat.title).length;
             return (
               <div
                 key={cat.title}
@@ -172,54 +246,10 @@ export const CitizenDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Community Achievements Badges Snippet */}
-      <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white rounded-3xl p-6 shadow-xl space-y-4 border border-slate-800">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Award className="w-6 h-6 text-amber-400" />
-            <h3 className="text-lg font-bold">Community Helper Badges</h3>
-          </div>
-          <button onClick={() => navigateTo('profile')} className="text-xs font-bold text-blue-400 hover:underline">
-            View All Badges →
-          </button>
-        </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div className="p-3 rounded-xl bg-slate-800/80 border border-slate-700 flex items-center gap-3">
-            <ShieldCheck className="w-6 h-6 text-emerald-400" />
-            <div>
-              <p className="text-xs font-bold">Active Reporter</p>
-              <p className="text-[10px] text-slate-400">Unlocked</p>
-            </div>
-          </div>
-          <div className="p-3 rounded-xl bg-slate-800/80 border border-slate-700 flex items-center gap-3">
-            <Award className="w-6 h-6 text-amber-400" />
-            <div>
-              <p className="text-xs font-bold">Community Helper</p>
-              <p className="text-[10px] text-slate-400">Unlocked</p>
-            </div>
-          </div>
-          <div className="p-3 rounded-xl bg-slate-800/80 border border-slate-700 flex items-center gap-3">
-            <Sparkles className="w-6 h-6 text-cyan-400" />
-            <div>
-              <p className="text-xs font-bold">Eco Guardian</p>
-              <p className="text-[10px] text-slate-400">Unlocked</p>
-            </div>
-          </div>
-          <div className="p-3 rounded-xl bg-slate-800/50 border border-slate-700/50 flex items-center gap-3 opacity-60">
-            <Award className="w-6 h-6 text-slate-500" />
-            <div>
-              <p className="text-xs font-bold">5-Star Citizen</p>
-              <p className="text-[10px] text-slate-400">Locked</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Recent Grievances Table Snippet */}
+      {/* Recent Grievances List */}
       <div className="bg-white dark:bg-slate-800 rounded-3xl p-6 border border-slate-200/80 dark:border-slate-700 shadow-xs space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-bold text-slate-900 dark:text-white">My Recent Complaints</h3>
+          <h3 className="text-lg font-bold text-slate-900 dark:text-white">Recent Grievances</h3>
           <button
             onClick={() => navigateTo('my_complaints')}
             className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
@@ -230,7 +260,7 @@ export const CitizenDashboard: React.FC = () => {
         </div>
 
         <div className="divide-y divide-slate-100 dark:divide-slate-700/60">
-          {citizenComplaints.slice(0, 4).map(c => (
+          {userComplaints.slice(0, 4).map(c => (
             <div
               key={c.id}
               onClick={() => navigateTo('complaint_details', c.id)}
@@ -255,6 +285,15 @@ export const CitizenDashboard: React.FC = () => {
           ))}
         </div>
       </div>
+
+      {/* Progress Update Modal for Volunteer */}
+      {selectedComplaintForProgress && (
+        <ProgressUpdateModal
+          isOpen={!!selectedComplaintForProgress}
+          onClose={() => setSelectedComplaintForProgress(null)}
+          complaint={selectedComplaintForProgress}
+        />
+      )}
     </div>
   );
 };
