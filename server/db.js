@@ -1,12 +1,29 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import pg from 'pg';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const DATA_DIR = path.join(__dirname, 'data');
 const DB_FILE = path.join(DATA_DIR, 'db.json');
+
+const DATABASE_URL = process.env.DATABASE_URL || process.env.SUPABASE_URL;
+
+let pool = null;
+
+if (DATABASE_URL) {
+  try {
+    pool = new pg.Pool({
+      connectionString: DATABASE_URL,
+      ssl: DATABASE_URL.includes('localhost') ? false : { rejectUnauthorized: false }
+    });
+    console.log('✅ PostgreSQL / Supabase Database Pool Initialized');
+  } catch (err) {
+    console.warn('⚠️ Could not initialize PostgreSQL pool, using local db fallback:', err.message);
+  }
+}
 
 const INITIAL_COMPLAINTS = [
   {
@@ -182,7 +199,6 @@ const INITIAL_COMPLAINTS = [
 ];
 
 const INITIAL_USERS = [];
-
 let inMemoryDb = null;
 
 function getDbFilePath() {
@@ -260,3 +276,114 @@ export function writeDb(data) {
   }
 }
 
+// Async PostgreSQL / Supabase helper methods
+export async function getDbAsync() {
+  if (!pool) {
+    return readDb();
+  }
+
+  try {
+    const complaintsRes = await pool.query('SELECT * FROM complaints ORDER BY created_at DESC');
+    const historyRes = await pool.query('SELECT * FROM complaint_history ORDER BY created_at ASC');
+    const usersRes = await pool.query('SELECT * FROM users');
+    const notificationsRes = await pool.query('SELECT * FROM notifications ORDER BY created_at DESC');
+
+    const historyByComplaint = {};
+    const remarksByComplaint = {};
+
+    historyRes.rows.forEach(h => {
+      if (!historyByComplaint[h.complaint_id]) historyByComplaint[h.complaint_id] = [];
+      if (!remarksByComplaint[h.complaint_id]) remarksByComplaint[h.complaint_id] = [];
+
+      historyByComplaint[h.complaint_id].push({
+        id: h.id,
+        stage: h.stage,
+        timestamp: h.created_at ? new Date(h.created_at).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }) : '',
+        description: h.description,
+        updatedBy: h.updated_by,
+        updatedByRole: h.updated_by_role,
+        proofUrl: h.proof_url || undefined,
+        progressPercent: h.progress_percent !== null ? h.progress_percent : undefined,
+      });
+
+      if (h.description && (h.updated_by_role !== 'citizen' || h.stage.includes('Remark'))) {
+        remarksByComplaint[h.complaint_id].push({
+          id: `r_${h.id}`,
+          author: h.updated_by,
+          role: h.updated_by_role || 'admin',
+          text: h.description,
+          timestamp: h.created_at ? new Date(h.created_at).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }) : '',
+        });
+      }
+    });
+
+    const formattedComplaints = complaintsRes.rows.map(c => ({
+      id: c.id,
+      title: c.title,
+      description: c.description,
+      category: c.category,
+      priority: c.priority,
+      status: c.status,
+      village: c.village,
+      wardNumber: c.ward_number,
+      landmark: c.landmark || undefined,
+      imageUrl: c.image_url || undefined,
+      createdAt: c.created_at ? new Date(c.created_at).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }) : '',
+      updatedAt: c.updated_at ? new Date(c.updated_at).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }) : '',
+      citizenName: c.citizen_name,
+      citizenEmail: c.citizen_email,
+      assignedOfficer: c.assigned_officer_name ? {
+        name: c.assigned_officer_name,
+        department: c.assigned_officer_dept || 'Municipal Dept',
+        contact: c.assigned_officer_contact || '',
+      } : undefined,
+      timeline: historyByComplaint[c.id] || [],
+      remarks: remarksByComplaint[c.id] || [],
+      rating: c.rating !== null ? c.rating : undefined,
+      feedbackText: c.feedback_text || undefined,
+      coordinates: { lat: c.latitude || 16.5020, lng: c.longitude || 80.5750 }
+    }));
+
+    const formattedUsers = usersRes.rows.map(u => ({
+      id: u.id,
+      name: u.name,
+      email: u.email,
+      role: u.role,
+      password: u.password_hash,
+      phone: u.phone || '',
+      village: u.village || 'Penumaka',
+      ward: u.ward || 'Ward 1',
+      totalComplaintsSubmitted: u.total_complaints_submitted || 0,
+      createdAt: u.created_at ? new Date(u.created_at).toLocaleDateString() : ''
+    }));
+
+    const formattedNotifications = notificationsRes.rows.map(n => ({
+      id: n.id,
+      title: n.title,
+      message: n.message,
+      timestamp: n.created_at ? new Date(n.created_at).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }) : '',
+      read: n.is_read,
+      type: n.type || 'status_change',
+      complaintId: n.complaint_id || undefined
+    }));
+
+    return {
+      complaints: formattedComplaints,
+      users: formattedUsers,
+      notifications: formattedNotifications
+    };
+  } catch (err) {
+    console.warn('⚠️ Error querying PostgreSQL, falling back to local storage:', err.message);
+    return readDb();
+  }
+}
+
+export async function queryPg(text, params) {
+  if (!pool) return null;
+  try {
+    return await pool.query(text, params);
+  } catch (err) {
+    console.error('PostgreSQL query error:', err.message);
+    return null;
+  }
+}
