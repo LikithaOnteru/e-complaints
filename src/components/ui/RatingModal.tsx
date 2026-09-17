@@ -11,7 +11,7 @@ interface RatingModalProps {
 }
 
 export const RatingModal: React.FC<RatingModalProps> = ({ isOpen, onClose, complaintId }) => {
-  const { addRating } = useApp();
+  const { addRating, t } = useApp();
   const [rating, setRating] = useState<number>(5);
   const [hoverRating, setHoverRating] = useState<number>(0);
   const [feedback, setFeedback] = useState<string>('');
@@ -31,10 +31,10 @@ export const RatingModal: React.FC<RatingModalProps> = ({ isOpen, onClose, compl
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Rate Service & Feedback">
+    <Modal isOpen={isOpen} onClose={onClose} title={t.ratingTitle}>
       <form onSubmit={handleSubmit} className="space-y-5">
         <p className="text-sm text-slate-600 dark:text-slate-300">
-          How satisfied were you with the grievance resolution provided for complaint <strong className="text-blue-600">{complaintId}</strong>?
+          {t.ratingPrompt} ({complaintId})
         </p>
 
         <div className="flex items-center justify-center gap-2 py-4">
@@ -60,13 +60,13 @@ export const RatingModal: React.FC<RatingModalProps> = ({ isOpen, onClose, compl
 
         <div>
           <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">
-            Additional Remarks & Feedback (Optional)
+            {t.description}
           </label>
           <textarea
             rows={3}
             value={feedback}
             onChange={e => setFeedback(e.target.value)}
-            placeholder="Tell us about the speed and quality of work done by the assigned department..."
+            placeholder="..."
             className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
           />
         </div>
@@ -77,16 +77,17 @@ export const RatingModal: React.FC<RatingModalProps> = ({ isOpen, onClose, compl
             onClick={onClose}
             className="px-4 py-2 text-sm font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl transition-colors"
           >
-            Cancel
+            {t.cancel}
           </button>
           <button
             type="submit"
             className="px-5 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-md transition-all active:scale-95 btn-ripple"
           >
-            Submit Feedback
+            {t.ratingSubmit}
           </button>
         </div>
       </form>
     </Modal>
   );
 };
+

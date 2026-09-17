@@ -21,7 +21,7 @@ import {
 import { motion } from 'framer-motion';
 
 export const AdminComplaintsPage: React.FC = () => {
-  const { complaints, updateComplaintStatus, assignOfficer, navigateTo, showToast } = useApp();
+  const { complaints, updateComplaintStatus, assignOfficer, navigateTo, t } = useApp();
 
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [filterCategory, setFilterCategory] = useState<string>('All');
@@ -97,7 +97,7 @@ export const AdminComplaintsPage: React.FC = () => {
         <div>
           <div className="flex items-center gap-2">
             <ShieldCheck className="w-7 h-7 text-blue-600 dark:text-blue-400" />
-            <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">Admin Grievance Management</h2>
+            <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">{t.adminDashboardTitle}</h2>
           </div>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
             Filter, inspect photo evidence, assign departmental officers, and update resolution statuses.
@@ -105,7 +105,7 @@ export const AdminComplaintsPage: React.FC = () => {
         </div>
 
         <div className="px-4 py-2 rounded-2xl bg-blue-50 dark:bg-blue-950/60 border border-blue-200 text-xs font-bold text-blue-700 dark:text-blue-300">
-          Total Grievances: {complaints.length}
+          {t.totalGrievances}: {complaints.length}
         </div>
       </div>
 
@@ -117,7 +117,7 @@ export const AdminComplaintsPage: React.FC = () => {
             type="text"
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
-            placeholder="Search ID, title, citizen..."
+            placeholder={`${t.search}...`}
             className="w-full pl-10 pr-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white text-xs font-semibold outline-none"
           />
         </div>
@@ -127,7 +127,7 @@ export const AdminComplaintsPage: React.FC = () => {
           onChange={e => setFilterCategory(e.target.value)}
           className="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white text-xs font-semibold outline-none"
         >
-          <option value="All">All Categories</option>
+          <option value="All">{t.all} {t.category}</option>
           <option value="Road Damage">Road Damage</option>
           <option value="Drainage">Drainage</option>
           <option value="Water Supply">Water Supply</option>
@@ -143,13 +143,13 @@ export const AdminComplaintsPage: React.FC = () => {
           onChange={e => setFilterVillage(e.target.value)}
           className="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white text-xs font-semibold outline-none"
         >
-          <option value="All">All Villages</option>
-          <option value="Rampur">Rampur</option>
-          <option value="Sundarpur">Sundarpur</option>
-          <option value="Gopalpur">Gopalpur</option>
-          <option value="Haripur">Haripur</option>
-          <option value="Belpur">Belpur</option>
-          <option value="Krishnanagar">Krishnanagar</option>
+          <option value="All">{t.all} {t.village}</option>
+          <option value="Penumaka">Penumaka</option>
+          <option value="Undavalli">Undavalli</option>
+          <option value="Tadepalle">Tadepalle</option>
+          <option value="Mangalagiri">Mangalagiri</option>
+          <option value="Nowlur">Nowlur</option>
+          <option value="Kaza">Kaza</option>
         </select>
 
         <select
@@ -157,10 +157,10 @@ export const AdminComplaintsPage: React.FC = () => {
           onChange={e => setFilterPriority(e.target.value)}
           className="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white text-xs font-semibold outline-none"
         >
-          <option value="All">All Priorities</option>
-          <option value="High">High Priority</option>
-          <option value="Medium">Medium Priority</option>
-          <option value="Low">Low Priority</option>
+          <option value="All">{t.all} {t.priority}</option>
+          <option value="High">{t.priorityHigh}</option>
+          <option value="Medium">{t.priorityMedium}</option>
+          <option value="Low">{t.priorityLow}</option>
         </select>
 
         <select
@@ -168,11 +168,11 @@ export const AdminComplaintsPage: React.FC = () => {
           onChange={e => setFilterStatus(e.target.value)}
           className="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white text-xs font-semibold outline-none"
         >
-          <option value="All">All Statuses</option>
-          <option value="Pending">Pending</option>
-          <option value="In Progress">In Progress</option>
-          <option value="Resolved">Resolved</option>
-          <option value="Rejected">Rejected</option>
+          <option value="All">{t.all} {t.status}</option>
+          <option value="Pending">{t.statusPending}</option>
+          <option value="In Progress">{t.statusInProgress}</option>
+          <option value="Resolved">{t.statusResolved}</option>
+          <option value="Rejected">{t.statusRejected}</option>
         </select>
       </div>
 
@@ -183,13 +183,13 @@ export const AdminComplaintsPage: React.FC = () => {
             <thead>
               <tr className="bg-slate-50 dark:bg-slate-900/80 border-b border-slate-200 dark:border-slate-700 text-[11px] font-extrabold uppercase text-slate-500 tracking-wider">
                 <th className="py-4 px-4">Complaint ID</th>
-                <th className="py-4 px-4">Citizen & Title</th>
-                <th className="py-4 px-4">Category</th>
-                <th className="py-4 px-4">Village</th>
-                <th className="py-4 px-4">Priority</th>
-                <th className="py-4 px-4">Status</th>
-                <th className="py-4 px-4">Assigned Officer</th>
-                <th className="py-4 px-4 text-right">Actions</th>
+                <th className="py-4 px-4">{t.citizen} & Title</th>
+                <th className="py-4 px-4">{t.category}</th>
+                <th className="py-4 px-4">{t.village}</th>
+                <th className="py-4 px-4">{t.priority}</th>
+                <th className="py-4 px-4">{t.status}</th>
+                <th className="py-4 px-4">{t.assignedTo}</th>
+                <th className="py-4 px-4 text-right">{t.actions}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-700/60 text-xs">
@@ -224,7 +224,7 @@ export const AdminComplaintsPage: React.FC = () => {
                     <div className="flex items-center justify-end gap-1.5">
                       <button
                         onClick={() => navigateTo('complaint_details', c.id)}
-                        title="View Full Case Details"
+                        title={t.viewDetails}
                         className="p-1.5 rounded-lg text-slate-500 hover:text-blue-600 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
                       >
                         <Eye className="w-4 h-4" />
@@ -232,7 +232,7 @@ export const AdminComplaintsPage: React.FC = () => {
 
                       <button
                         onClick={() => openProgressModal(c)}
-                        title="Post Volunteer/Field Progress & Proof Photo"
+                        title={t.progressUpdateTitle}
                         className="p-1.5 rounded-lg text-slate-500 hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-950/40 transition-colors"
                       >
                         <Camera className="w-4 h-4" />
@@ -240,7 +240,7 @@ export const AdminComplaintsPage: React.FC = () => {
 
                       <button
                         onClick={() => openAssignModal(c)}
-                        title="Assign Departmental Officer"
+                        title={t.assignedTo}
                         className="p-1.5 rounded-lg text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 transition-colors"
                       >
                         <UserCheck className="w-4 h-4" />
@@ -248,7 +248,7 @@ export const AdminComplaintsPage: React.FC = () => {
 
                       <button
                         onClick={() => openStatusModal(c)}
-                        title="Update Resolution Status"
+                        title={t.updateStatus}
                         className="p-1.5 rounded-lg text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition-colors"
                       >
                         <Edit3 className="w-4 h-4" />
@@ -264,10 +264,10 @@ export const AdminComplaintsPage: React.FC = () => {
 
       {/* Change Status Modal */}
       {selectedComplaint && (
-        <Modal isOpen={statusModalOpen} onClose={() => setStatusModalOpen(false)} title={`Update Status: ${selectedComplaint.id}`}>
+        <Modal isOpen={statusModalOpen} onClose={() => setStatusModalOpen(false)} title={`${t.updateStatus}: ${selectedComplaint.id}`}>
           <form onSubmit={handleStatusSubmit} className="space-y-4">
             <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">Select New Status</label>
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">{t.status}</label>
               <div className="grid grid-cols-2 gap-2">
                 {(['Pending', 'In Progress', 'Resolved', 'Rejected'] as StatusType[]).map(s => (
                   <button
@@ -280,7 +280,7 @@ export const AdminComplaintsPage: React.FC = () => {
                         : 'bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700'
                     }`}
                   >
-                    {s}
+                    {s === 'Pending' ? t.statusPending : s === 'In Progress' ? t.statusInProgress : s === 'Resolved' ? t.statusResolved : t.statusRejected}
                   </button>
                 ))}
               </div>
@@ -288,13 +288,13 @@ export const AdminComplaintsPage: React.FC = () => {
 
             <div>
               <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">
-                Official Authority Remarks
+                {t.description}
               </label>
               <textarea
                 rows={3}
                 value={remarkText}
                 onChange={e => setRemarkText(e.target.value)}
-                placeholder="Enter field update or reason for resolution/rejection..."
+                placeholder="..."
                 className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white text-xs outline-none"
               />
             </div>
@@ -305,13 +305,13 @@ export const AdminComplaintsPage: React.FC = () => {
                 onClick={() => setStatusModalOpen(false)}
                 className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100"
               >
-                Cancel
+                {t.cancel}
               </button>
               <button
                 type="submit"
                 className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-md"
               >
-                Save Changes
+                {t.save}
               </button>
             </div>
           </form>
@@ -320,7 +320,7 @@ export const AdminComplaintsPage: React.FC = () => {
 
       {/* Assign Officer Modal */}
       {selectedComplaint && (
-        <Modal isOpen={assignModalOpen} onClose={() => setAssignModalOpen(false)} title={`Assign Officer: ${selectedComplaint.id}`}>
+        <Modal isOpen={assignModalOpen} onClose={() => setAssignModalOpen(false)} title={`${t.assignedTo}: ${selectedComplaint.id}`}>
           <form onSubmit={handleAssignSubmit} className="space-y-4">
             <div>
               <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">Officer Name</label>
@@ -360,13 +360,13 @@ export const AdminComplaintsPage: React.FC = () => {
                 onClick={() => setAssignModalOpen(false)}
                 className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100"
               >
-                Cancel
+                {t.cancel}
               </button>
               <button
                 type="submit"
                 className="px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold shadow-md"
               >
-                Assign Officer
+                {t.save}
               </button>
             </div>
           </form>
@@ -384,3 +384,4 @@ export const AdminComplaintsPage: React.FC = () => {
     </div>
   );
 };
+
