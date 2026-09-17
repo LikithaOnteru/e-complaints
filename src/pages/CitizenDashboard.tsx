@@ -34,7 +34,7 @@ import {
 import { motion } from 'framer-motion';
 
 export const CitizenDashboard: React.FC = () => {
-  const { currentUser, complaints, navigateTo } = useApp();
+  const { currentUser, complaints, navigateTo, t } = useApp();
   const [selectedComplaintForProgress, setSelectedComplaintForProgress] = useState<Complaint | null>(null);
 
   const isVolunteer = currentUser?.role === 'volunteer';
@@ -76,7 +76,7 @@ export const CitizenDashboard: React.FC = () => {
         <div className="relative z-10 space-y-2 max-w-2xl">
           <span className="px-3 py-1 rounded-full bg-white/20 text-white text-xs font-bold uppercase tracking-wider backdrop-blur-xs flex items-center gap-1.5 w-max">
             {isVolunteer ? <Users className="w-3.5 h-3.5" /> : null}
-            {isVolunteer ? 'Grama Sachivalayam Volunteer Work Hub' : 'Citizen Dashboard'}
+            {isVolunteer ? 'Grama Sachivalayam Volunteer Work Hub' : t.citizenDashboardTitle}
           </span>
           <h2 className="text-3xl sm:text-4xl font-black tracking-tight">
             Namaste, {currentUser?.name || 'User'}! 👋
@@ -96,33 +96,33 @@ export const CitizenDashboard: React.FC = () => {
       {/* Statistics Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         <StatCard
-          title={isVolunteer ? "Village Grievances" : "Total Complaints"}
+          title={isVolunteer ? "Village Grievances" : t.totalGrievances}
           value={total}
           icon={FileText}
           color="blue"
-          subtitle="Grievances registered"
+          subtitle={t.totalComplaints}
           onClick={() => navigateTo('my_complaints')}
         />
         <StatCard
-          title="Pending Action"
+          title={t.pendingCount}
           value={pending}
           icon={Clock}
           color="amber"
-          subtitle="Awaiting inspection"
+          subtitle={t.statusPending}
         />
         <StatCard
-          title="Work In Progress"
+          title={t.inProgressCount}
           value={inProgress}
           icon={Loader2}
           color="purple"
-          subtitle="Field work underway"
+          subtitle={t.statusInProgress}
         />
         <StatCard
-          title="Resolved & Verified"
+          title={t.resolvedCount}
           value={resolved}
           icon={CheckCircle2}
           color="emerald"
-          subtitle="Fixed with proof"
+          subtitle={t.statusResolved}
         />
       </div>
 

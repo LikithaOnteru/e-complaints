@@ -21,7 +21,7 @@ import {
 import { motion } from 'framer-motion';
 
 export const AdminDashboard: React.FC = () => {
-  const { complaints, navigateTo } = useApp();
+  const { complaints, navigateTo, t } = useApp();
 
   const total = complaints.length;
   const pending = complaints.filter(c => c.status === 'Pending').length;
@@ -39,9 +39,9 @@ export const AdminDashboard: React.FC = () => {
           <span className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-bold uppercase tracking-wider">
             Local Authority Control Panel
           </span>
-          <h2 className="text-3xl font-black">Nodal Officer Dashboard</h2>
+          <h2 className="text-3xl font-black">{t.adminDashboardTitle}</h2>
           <p className="text-slate-400 text-sm">
-            Managing rural grievances across 6 villages in Varanasi Division. Real-time statistics & officer assignment.
+            Managing rural grievances across Andhra Pradesh Grama Sachivalayams. Real-time statistics & officer assignment.
           </p>
         </div>
 
@@ -50,7 +50,7 @@ export const AdminDashboard: React.FC = () => {
             onClick={() => navigateTo('admin_complaints')}
             className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md transition-all btn-ripple"
           >
-            Manage All Complaints ({total})
+            {t.myComplaints} ({total})
           </button>
         </div>
       </div>
@@ -58,36 +58,36 @@ export const AdminDashboard: React.FC = () => {
       {/* Statistics Overview Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         <StatCard
-          title="Total Complaints"
+          title={t.totalComplaints}
           value={total}
           icon={FileText}
           color="blue"
           onClick={() => navigateTo('admin_complaints')}
         />
         <StatCard
-          title="Pending Review"
+          title={t.pendingCount}
           value={pending}
           icon={Clock}
           color="amber"
         />
         <StatCard
-          title="In Progress"
+          title={t.inProgressCount}
           value={inProgress}
           icon={Loader2}
           color="purple"
         />
         <StatCard
-          title="Resolved"
+          title={t.resolvedCount}
           value={resolved}
           icon={CheckCircle2}
           color="emerald"
         />
         <StatCard
-          title="Critical Issues"
+          title={t.highPriority}
           value={critical}
           icon={AlertCircle}
           color="rose"
-          subtitle="High priority active"
+          subtitle={t.statusPending}
         />
       </div>
 

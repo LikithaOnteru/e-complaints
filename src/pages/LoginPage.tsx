@@ -102,7 +102,7 @@ export const LoginPage: React.FC = () => {
           
           <div>
             <h2 className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
-              {authMode === 'signin' ? t.loginHeading : 'Create New Account'}
+              {authMode === 'signin' ? t.loginHeading : t.registerTab}
             </h2>
             <p className="text-sm font-semibold text-blue-600 dark:text-blue-400 mt-1">
               {t.portalSubtitle}
@@ -125,7 +125,7 @@ export const LoginPage: React.FC = () => {
               }`}
             >
               <LogIn className="w-4 h-4" />
-              Sign In to Account
+              {t.signInTab}
             </button>
 
             <button
@@ -138,7 +138,7 @@ export const LoginPage: React.FC = () => {
               }`}
             >
               <UserPlus className="w-4 h-4" />
-              Create New Account
+              {t.registerTab}
             </button>
           </div>
 
@@ -162,7 +162,7 @@ export const LoginPage: React.FC = () => {
                     }`}
                   >
                     <User className="w-4 h-4 shrink-0" />
-                    <span>{language === 'te' ? 'పౌరుడు' : language === 'hi' ? 'नागरिक' : 'Citizen'}</span>
+                    <span>{t.citizen}</span>
                   </button>
 
                   <button
@@ -175,7 +175,7 @@ export const LoginPage: React.FC = () => {
                     }`}
                   >
                     <Users className="w-4 h-4 shrink-0" />
-                    <span>{language === 'te' ? 'వాలంటీర్' : language === 'hi' ? 'वॉलंटियर' : 'Volunteer'}</span>
+                    <span>{t.volunteer}</span>
                   </button>
 
                   <button
@@ -188,7 +188,7 @@ export const LoginPage: React.FC = () => {
                     }`}
                   >
                     <ShieldCheck className="w-4 h-4 shrink-0" />
-                    <span>{language === 'te' ? 'అడ్మిన్' : language === 'hi' ? 'एडमिन' : 'Admin'}</span>
+                    <span>{t.admin}</span>
                   </button>
                 </div>
               </div>
