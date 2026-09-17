@@ -183,11 +183,26 @@ const INITIAL_COMPLAINTS = [
 
 const INITIAL_USERS = [];
 
-function ensureDbExists() {
-  if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
+let inMemoryDb = null;
+
+function getDbFilePath() {
+  if (process.env.VERCEL) {
+    return path.join('/tmp', 'db.json');
   }
-  if (!fs.existsSync(DB_FILE)) {
+  return DB_FILE;
+}
+
+function ensureDbExists(targetPath = DB_FILE) {
+  const targetDir = path.dirname(targetPath);
+  if (!fs.existsSync(targetDir)) {
+    try {
+      fs.mkdirSync(targetDir, { recursive: true });
+    } catch (e) {
+      console.warn('Could not create directory:', targetDir, e);
+    }
+  }
+  
+  if (!fs.existsSync(targetPath)) {
     const initialDb = {
       complaints: INITIAL_COMPLAINTS,
       users: INITIAL_USERS,
@@ -203,26 +218,45 @@ function ensureDbExists() {
         },
       ],
     };
-    fs.writeFileSync(DB_FILE, JSON.stringify(initialDb, null, 2));
+    try {
+      fs.writeFileSync(targetPath, JSON.stringify(initialDb, null, 2));
+    } catch (e) {
+      console.warn('Could not write initial db file:', targetPath, e);
+      return initialDb;
+    }
   }
 }
 
 export function readDb() {
-  ensureDbExists();
+  const targetPath = getDbFilePath();
+  ensureDbExists(targetPath);
   try {
-    const data = fs.readFileSync(DB_FILE, 'utf-8');
-    return JSON.parse(data);
+    if (fs.existsSync(targetPath)) {
+      const data = fs.readFileSync(targetPath, 'utf-8');
+      inMemoryDb = JSON.parse(data);
+      return inMemoryDb;
+    }
   } catch (err) {
-    console.error('Error reading db file', err);
-    return { complaints: INITIAL_COMPLAINTS, users: INITIAL_USERS, notifications: [] };
+    console.error('Error reading db file:', err);
   }
+  
+  if (!inMemoryDb) {
+    inMemoryDb = { complaints: INITIAL_COMPLAINTS, users: INITIAL_USERS, notifications: [] };
+  }
+  return inMemoryDb;
 }
 
 export function writeDb(data) {
-  ensureDbExists();
+  inMemoryDb = data;
+  const targetPath = getDbFilePath();
   try {
-    fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2));
+    const targetDir = path.dirname(targetPath);
+    if (!fs.existsSync(targetDir)) {
+      fs.mkdirSync(targetDir, { recursive: true });
+    }
+    fs.writeFileSync(targetPath, JSON.stringify(data, null, 2));
   } catch (err) {
-    console.error('Error writing db file', err);
+    console.warn('Notice: Disk write unavailable, using in-memory state:', err.message);
   }
 }
+
